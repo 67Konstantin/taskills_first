@@ -15,6 +15,11 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  String name = '';
+  String email = '';
+  String password = '';
+  String confirmPassword = '';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,7 +35,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             ),
             Positioned(
-              top: MyVariables.screenHeight * 0.20,
+              top: MyVariables.screenHeight * 0.15,
               left: MyVariables.screenWidth * 0.1,
               child: Column(
                 children: [
@@ -47,8 +52,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           height: MyVariables.screenHeight * 0.035,
                         ),
                         Text(
-                          AppLocalizations.of(context).hello,
-                          style: TextStyle(
+                          AppLocalizations.of(context).strAcquainted,
+                          style: const TextStyle(
                             fontSize: 24.0,
                             fontWeight: FontWeight.bold,
                           ),
@@ -57,30 +62,43 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         SizedBox(
                           height: MyVariables.screenHeight * 0.03,
                         ),
-                        buildCustomTextField(AppLocalizations.of(context).strName, false),
-                        SizedBox(
-                          height: MyVariables.screenHeight * 0.005,
+                        buildCustomTextField(
+                          label: AppLocalizations.of(context).strName,
+                          onChanged: (value) {
+                            name = value;
+                          },
                         ),
-                        buildCustomTextField(AppLocalizations.of(context).strEmail, false),
-                        SizedBox(
-                          height: MyVariables.screenHeight * 0.005,
-                        ),
-                        buildCustomTextField(AppLocalizations.of(context).strPassword, true),
                         SizedBox(
                           height: MyVariables.screenHeight * 0.005,
                         ),
                         buildCustomTextField(
-                            AppLocalizations.of(context).strConfirmPassword, true),
-                        /* TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            'Забыли пароль?',
-                            style: TextStyle(
-                              fontSize: 14.0,
-                              color: MyColor().mainBlue,
-                            ),
-                          ),
-                        ), */
+                          label: AppLocalizations.of(context).strEmail,
+                          isEmail: true,
+                          onChanged: (value) {
+                            email = value;
+                          },
+                        ),
+                        SizedBox(
+                          height: MyVariables.screenHeight * 0.005,
+                        ),
+                        buildCustomTextField(
+                          label: AppLocalizations.of(context).strPassword,
+                          isPassword: true,
+                          onChanged: (value) {
+                            password = value;
+                          },
+                        ),
+                        SizedBox(
+                          height: MyVariables.screenHeight * 0.005,
+                        ),
+                        buildCustomTextField(
+                          label:
+                              AppLocalizations.of(context).strConfirmPassword,
+                          isPassword: true,
+                          onChanged: (value) {
+                            confirmPassword = value;
+                          },
+                        ),
                       ],
                     ),
                   ),
@@ -91,7 +109,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     width: MyVariables.screenWidth * 0.6,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Действие при нажатии кнопки
+                        if (password == confirmPassword &&
+                            password.length>=8 && _isEmailValid(email) && name.isNotEmpty) {
+                          AutoRouter.of(context).replace(AccountRoute());
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  AppLocalizations.of(context).strValidateSignUp),
+                              duration: Duration(seconds: 5),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         primary: MyColor().mainBlue,
@@ -99,14 +128,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           borderRadius: BorderRadius.circular(100.0),
                         ),
                       ),
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.all(16.0),
-                        child: Text(
-                          'Зарегестрироваться',
-                          style: TextStyle(
-                            fontSize: 15.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Column(
+                          children: [
+                            Text(
+                              AppLocalizations.of(context).strSignUp,
+                              style: TextStyle(
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -116,27 +149,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       AutoRouter.of(context).replace(SignInRoute());
                     },
                     child: Text(
-                      'Уже есть аккакунт? Войдите!',
+                      AppLocalizations.of(context).strAlreadyHaveAccount,
                       style: TextStyle(
                         fontSize: 14.0,
                         color: MyColor().mainBlue,
                       ),
                     ),
                   ),
-                  ElevatedButton(
-      onPressed: () {
-        // Меняем язык при нажатии кнопки
-        context.read<LocalizationProvider>().toggleLocale();
-
-      },
-      child: Text(
-        'Switch Language', // Текст кнопки можете изменить под свои нужды
-      ),),
+                  TextButton(
+                    onPressed: () {
+                      context.read<LocalizationProvider>().toggleLocale();
+                    },
+                    style: TextButton.styleFrom(
+                      primary: Colors.grey, // Text color
+                      padding: const EdgeInsets.all(16.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.language, color: Colors.grey),
+                        SizedBox(width: 8.0),
+                        Text(
+                          AppLocalizations.of(context).strChangeLanguage,
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
             Positioned(
-              top: MyVariables.screenHeight * 0.15,
+              top: MyVariables.screenHeight * 0.10,
               left: MyVariables.screenWidth * 0.5 -
                   MyVariables.screenHeight * 0.05,
               child: Container(
@@ -162,18 +205,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
     );
   }
 
-  Widget buildCustomTextField(String labelText, bool isPassword) {
+  Widget buildCustomTextField({
+    bool isPassword = false,
+    bool isEmail = false,
+    String label = '',
+    required Function(String) onChanged,
+  }) {
     return Container(
       height: MyVariables.screenHeight * 0.09,
       width: MyVariables.screenWidth * 0.9,
       child: CustomTextField(
-        labelText: labelText,
+        labelText: label,
         enabledColor: Colors.white,
         focusColor: MyColor().greyForTextField,
         fillColor: Color.fromARGB(255, 240, 240, 240),
         isPassword: isPassword,
+        isEmail: isEmail,
         borderRadius: 12,
+        onChanged: onChanged,
       ),
     );
+  }
+  bool _isEmailValid(String email) {
+    return RegExp(
+            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+        .hasMatch(email);
   }
 }

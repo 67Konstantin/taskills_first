@@ -6,8 +6,11 @@ class CustomTextField extends StatefulWidget {
   final Color enabledColor;
   final Color fillColor;
   final bool isPassword;
+  final bool isEmail;
   final Color textColor;
   final double borderRadius;
+  final TextInputType inputType;
+  final Function(String)? onChanged;
 
   CustomTextField({
     required this.labelText,
@@ -16,7 +19,10 @@ class CustomTextField extends StatefulWidget {
     this.fillColor = Colors.blue,
     this.textColor = Colors.black,
     this.isPassword = false,
+    this.isEmail = false,
     this.borderRadius = 100,
+    this.inputType = TextInputType.text,
+    this.onChanged,
   });
 
   @override
@@ -25,11 +31,13 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   late bool _obscureText;
+  late Color enabledTextField;
 
   @override
   void initState() {
     super.initState();
     _obscureText = widget.isPassword;
+    enabledTextField = widget.enabledColor;
   }
 
   @override
@@ -42,6 +50,20 @@ class _CustomTextFieldState extends State<CustomTextField> {
         fontSize: textSize,
       ),
       obscureText: _obscureText,
+      keyboardType: widget.inputType,
+      onChanged: (String value) {
+        setState(() {
+          if (widget.isPassword && value.length < 8) {
+            enabledTextField = Colors.red;
+          } else if (widget.isEmail && !_isEmailValid(value)) {
+            enabledTextField = Colors.red;
+          } else {
+            // В противном случае возвращаем исходный цвет
+            enabledTextField = widget.enabledColor;
+          }
+        });
+        widget.onChanged?.call(value);
+      },
       decoration: InputDecoration(
         focusColor: widget.focusColor,
         labelText: widget.labelText,
@@ -55,7 +77,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         filled: true,
         enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(
-            color: widget.enabledColor,
+            color: enabledTextField,
             width: 1,
           ),
           borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -69,8 +91,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ),
         suffixIcon: widget.isPassword
             ? Padding(
-                padding:
-                    EdgeInsets.only(right: 12.0), // Отступ справа для глазика
+                padding: EdgeInsets.only(right: 12.0),
                 child: IconButton(
                   icon: Icon(
                     _obscureText
@@ -88,5 +109,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
             : null,
       ),
     );
+  }
+
+  bool _isEmailValid(String email) {
+    return RegExp(
+            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+        .hasMatch(email);
   }
 }

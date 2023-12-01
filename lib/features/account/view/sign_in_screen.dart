@@ -1,7 +1,9 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:taskills_first/features/widgets/exports.dart';
 import 'package:taskills_first/help_classes/exports.dart';
+import 'package:taskills_first/localisation/app_localizations.dart';
 import 'package:taskills_first/router/router.dart';
 
 @RoutePage()
@@ -13,6 +15,9 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
+  
+  String password = '';
+  String email = '';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,9 +49,9 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(
                           height: MyVariables.screenHeight * 0.05,
                         ),
-                        const Text(
-                          'Войдите, чтобы \n продолжить',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context).strLoginToContinue,
+                          style: const TextStyle(
                             fontSize: 24.0,
                             fontWeight: FontWeight.bold,
                           ),
@@ -55,11 +60,23 @@ class _SignInScreenState extends State<SignInScreen> {
                         SizedBox(
                           height: MyVariables.screenHeight * 0.05,
                         ),
-                        buildCustomTextField('Email', false),
+                        buildCustomTextField(
+                          label: AppLocalizations.of(context).strEmail,
+                          isEmail: true,
+                          onChanged: (value) {
+                            email = value;
+                          },
+                        ),
                         SizedBox(
                           height: MyVariables.screenHeight * 0.02,
                         ),
-                        buildCustomTextField('Пароль', true),
+                        buildCustomTextField(
+                          label: AppLocalizations.of(context).strPassword,
+                          isPassword: true,
+                          onChanged: (value) {
+                            password = value;
+                          },
+                        ),
                         /* TextButton(
                           onPressed: () {},
                           child: Text(
@@ -80,7 +97,17 @@ class _SignInScreenState extends State<SignInScreen> {
                     width: MyVariables.screenWidth * 0.6,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Действие при нажатии кнопки
+                        if (password.length>=8 && _isEmailValid(email)) {
+                          AutoRouter.of(context).replace(AccountRoute());
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  AppLocalizations.of(context).strValidateSignIn),
+                              duration: Duration(seconds: 3),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         primary: MyColor().mainBlue,
@@ -88,11 +115,11 @@ class _SignInScreenState extends State<SignInScreen> {
                           borderRadius: BorderRadius.circular(100.0),
                         ),
                       ),
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.all(16.0),
                         child: Text(
-                          'Войти',
-                          style: TextStyle(
+                          AppLocalizations.of(context).strSignIn,
+                          style: const TextStyle(
                             fontSize: 15.0,
                             fontWeight: FontWeight.bold,
                           ),
@@ -105,11 +132,31 @@ class _SignInScreenState extends State<SignInScreen> {
                       AutoRouter.of(context).replace(SignUpRoute());
                     },
                     child: Text(
-                      'Нет аккаунта? Зарегестрируйтесь!',
+                      AppLocalizations.of(context).strNoAccountSignUp,
                       style: TextStyle(
                         fontSize: 14.0,
                         color: MyColor().mainBlue,
                       ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      context.read<LocalizationProvider>().toggleLocale();
+                    },
+                    style: TextButton.styleFrom(
+                      primary: Colors.grey, // Text color
+                      padding: const EdgeInsets.all(16.0),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.language,
+                            color: Colors.grey), // Icon on the left
+                        SizedBox(width: 8.0),
+                        Text(
+                          AppLocalizations.of(context).strChangeLanguage,
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -142,18 +189,31 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  Widget buildCustomTextField(String labelText, bool isPassword) {
+  Widget buildCustomTextField({
+    bool isPassword = false,
+    bool isEmail = false,
+    String label = '',
+    required Function(String) onChanged,
+  }) {
     return Container(
       height: MyVariables.screenHeight * 0.09,
       width: MyVariables.screenWidth * 0.9,
       child: CustomTextField(
-        labelText: labelText,
+        labelText: label,
         enabledColor: Colors.white,
         focusColor: MyColor().greyForTextField,
         fillColor: Color.fromARGB(255, 240, 240, 240),
         isPassword: isPassword,
+        isEmail: isEmail,
         borderRadius: 12,
+        onChanged: onChanged,
       ),
     );
   }
+  bool _isEmailValid(String email) {
+    return RegExp(
+            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$')
+        .hasMatch(email);
+  }
+
 }
